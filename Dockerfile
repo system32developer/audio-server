@@ -18,12 +18,13 @@ RUN apt-get update \
  && unzip -o /tmp/deno.zip -d /usr/local/bin && rm /tmp/deno.zip \
  && rm -rf /var/lib/apt/lists/*
 
-RUN useradd -m appuser
-USER appuser
+# Se ejecuta como root para poder escribir en el volumen /cache que monta Dokploy
+RUN mkdir -p /cache
 WORKDIR /app
 COPY --from=build /app/build/install/audio-server/ ./
 
 ENV PORT=8080
+ENV CACHE_DIR=/cache
 EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=5s --start-period=15s \
   CMD curl -fs http://localhost:8080/health || exit 1
