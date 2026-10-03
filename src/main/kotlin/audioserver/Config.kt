@@ -10,7 +10,14 @@ data class Config(
     val token: String?,
     val ytDlpCookies: String?,
     val sources: Map<String, String>,
+    val cacheDir: String,
+    val cacheMaxBytes: Long,
+    val maxDownloads: Int,
 ) {
+    /** MP3 CBR: bytes por segundo de audio (sirve para saltar a un punto del archivo). */
+    val bytesPerSecond: Long
+        get() = (bitrate.trim().lowercase().removeSuffix("k").toLongOrNull() ?: 128L) * 1000L / 8L
+
     companion object {
         fun fromEnv(): Config {
             val env = System.getenv()
@@ -30,6 +37,9 @@ data class Config(
                 token = env["STREAM_TOKEN"]?.takeIf { it.isNotBlank() },
                 ytDlpCookies = env["YTDLP_COOKIES"]?.takeIf { it.isNotBlank() },
                 sources = sources,
+                cacheDir = env["CACHE_DIR"] ?: "/cache",
+                cacheMaxBytes = (env["CACHE_MAX_MB"]?.toLongOrNull() ?: 2048L) * 1024L * 1024L,
+                maxDownloads = env["MAX_DOWNLOADS"]?.toIntOrNull() ?: 3,
             )
         }
     }
