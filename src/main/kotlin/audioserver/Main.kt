@@ -16,6 +16,7 @@ fun main() {
     val cfg = Config.fromEnv()
     val cache = AudioCache(cfg, AudioPipeline(cfg))
     val queues = QueueStore()
+    val catalog = Catalog(cfg)
 
     val server = HttpServer.create(InetSocketAddress(cfg.port), 0)
     server.executor = Executors.newVirtualThreadPerTaskExecutor()
@@ -41,6 +42,19 @@ fun main() {
             runCatching { respondText(ex, 500, "internal error") }
         } finally {
             ex.close()
+        }
+    }
+
+    for ((path, isPlaylist) in listOf("/search" to false, "/playlist" to true)) {
+        server.createContext(path) { ex ->
+            try {
+                handleCatalog(ex, cfg, catalog, isPlaylist)
+            } catch (e: Exception) {
+                log.warning("Error en $path: ${e.message}")
+                runCatching { respondText(ex, 500, "internal error") }
+            } finally {
+                ex.close()
+            }
         }
     }
 
@@ -117,6 +131,32 @@ private fun handleQueue(ex: HttpExchange, cfg: Config, cache: AudioCache, queues
         }
         "/list" -> respondText(ex, 200, queues.list(qid).joinToString("\n"))
         "/clear" -> { queues.clear(qid); respondText(ex, 200, "ok") }
+        "/insert" -> {
+            val item = q["q"]?.trim()?.take(200)?.takeIf { it.isNotEmpty() } ?: return respondText(ex, 400, "missing q")
+            val index = (q["i"]?.toIntOrNull() ?: 1).coerceAtLeast(1)
+            val pos = queues.insert(qid, index, item)
+            if (pos < 0) return respondText(ex, 409, "queue full")
+            prefetch(cache, queues, qid)
+            log.info("Cola[$qid] + '$item' (insertado en $pos)")
+            respondText(ex, 200, pos.toString())
+        }
+        "/remove" -> {
+            val index = q["i"]?.toIntOrNull() ?: return respondText(ex, 400, "missing i")
+            val expected = q["q"]?.trim()?.take(200)?.takeIf { it.isNotEmpty() }
+            if (!queues.remove(qid, index, expected)) return respondText(ex, 404, "gone")
+            prefetch(cache, queues, qid)
+            log.info("Cola[$qid] - posición $index")
+            respondText(ex, 200, "ok")
+        }
+        "/move" -> {
+            val from = q["from"]?.toIntOrNull() ?: return respondText(ex, 400, "missing from")
+            val to = q["to"]?.toIntOrNull() ?: return respondText(ex, 400, "missing to")
+            val expected = q["q"]?.trim()?.take(200)?.takeIf { it.isNotEmpty() }
+            if (!queues.move(qid, from, to, expected)) return respondText(ex, 404, "gone")
+            prefetch(cache, queues, qid)
+            log.info("Cola[$qid] movido $from -> $to")
+            respondText(ex, 200, "ok")
+        }
         else -> respondText(ex, 404, "not found")
     }
 }
@@ -124,6 +164,29 @@ private fun handleQueue(ex: HttpExchange, cfg: Config, cache: AudioCache, queues
 /** Empieza a descargar los próximos elementos de la cola para que estén listos cuando toque. */
 private fun prefetch(cache: AudioCache, queues: QueueStore, qid: String) {
     queues.list(qid).take(PREFETCH).forEach { runCatching { cache.obtain(Sources.search(it, 1)) } }
+}
+
+private val YOUTUBE_HOSTS = setOf("youtube.com", "www.youtube.com", "m.youtube.com", "music.youtube.com", "youtu.be")
+
+private fun isYouTubeUrl(url: String): Boolean = runCatching {
+    val uri = java.net.URI(url)
+    (uri.scheme == "https" || uri.scheme == "http") && uri.host?.lowercase()?.let { it in YOUTUBE_HOSTS } == true
+}.getOrDefault(false)
+
+private fun handleCatalog(ex: HttpExchange, cfg: Config, catalog: Catalog, playlist: Boolean) {
+    if (ex.requestMethod != "GET") return respondText(ex, 405, "method not allowed")
+    val q = parseQuery(ex.requestURI.rawQuery)
+    if (!authorized(cfg, q)) return respondText(ex, 403, "forbidden")
+    val limit = (q["limit"]?.toIntOrNull() ?: if (playlist) 50 else 10).coerceIn(1, 50)
+    val entries = if (playlist) {
+        val url = q["url"]?.trim().orEmpty()
+        if (!isYouTubeUrl(url)) return respondText(ex, 400, "invalid url")
+        catalog.playlist(url, limit)
+    } else {
+        val text = q["q"]?.trim()?.takeIf { it.isNotEmpty() && it.length <= 200 } ?: return respondText(ex, 400, "missing q")
+        catalog.search(text, limit)
+    }
+    respondText(ex, 200, entries.joinToString("\n") { it.toLine() })
 }
 
 // ------------------------------------------------------------------ utilidades
