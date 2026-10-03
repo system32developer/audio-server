@@ -8,9 +8,9 @@ import java.util.logging.Logger
 
 /**
  * Lanza el proceso externo y expone su salida como InputStream.
- * - Fuente http(s): yt-dlp (stdout) | ffmpeg (stdin -> MP3 stdout)
- * - Fuente local:   ffmpeg lee el archivo -> MP3 stdout
- * Se usa MP3 CBR (compatible con Alexa AudioPlayer, 16-48 kHz).
+ * - Fuente http(s) / ytsearchN:  yt-dlp (stdout) | ffmpeg (stdin -> MP3 stdout)
+ * - Fuente local:                ffmpeg lee el archivo -> MP3 stdout
+ * Salida: MP3 CBR sin cabeceras Xing/ID3 (así se puede saltar a un segundo exacto por bytes).
  */
 class AudioPipeline(private val cfg: Config) {
     private val log = Logger.getLogger("AudioPipeline")
@@ -20,6 +20,9 @@ class AudioPipeline(private val cfg: Config) {
         private val processes: List<Process>,
         private val tempFile: Path? = null,
     ) : AutoCloseable {
+        /** Espera a que terminen todos los procesos; true si todos salieron con código 0. */
+        fun succeeded(): Boolean = processes.all { it.waitFor() == 0 }
+
         override fun close() {
             processes.forEach { if (it.isAlive) it.destroy() }
             processes.forEach { if (it.isAlive) it.destroyForcibly() }
@@ -27,26 +30,26 @@ class AudioPipeline(private val cfg: Config) {
         }
     }
 
-    fun start(source: String, startSec: Int = 0): Running {
+    fun start(source: String): Running {
         // yt-dlp reescribe el archivo de cookies; trabaja sobre una copia temporal (el montaje puede ser de solo lectura)
         val cookieCopy: Path? = cfg.ytDlpCookies?.let {
             Files.createTempFile("ytc", ".txt").also { t -> Files.copy(Path.of(it), t, StandardCopyOption.REPLACE_EXISTING) }
         }
-        val seek = if (startSec > 0) listOf("-ss", startSec.toString()) else emptyList()
         val ffmpegOut = listOf(
             "-vn", "-acodec", "libmp3lame",
             "-b:a", cfg.bitrate, "-ar", cfg.sampleRate.toString(), "-ac", "2",
+            "-write_xing", "0", "-write_id3v2", "0",
             "-f", "mp3", "pipe:1",
         )
+        val ffmpegBase = listOf(cfg.ffmpeg, "-hide_banner", "-loglevel", "error")
         val builders = if (source.startsWith("http://") || source.startsWith("https://") || source.startsWith("ytsearch")) {
             listOf(
                 ProcessBuilder(ytDlpCommand(source, cookieCopy)),
-                ProcessBuilder(listOf(cfg.ffmpeg, "-hide_banner", "-loglevel", "error") + seek + listOf("-i", "pipe:0") + ffmpegOut),
+                ProcessBuilder(ffmpegBase + listOf("-i", "pipe:0") + ffmpegOut),
             )
         } else {
-            listOf(ProcessBuilder(listOf(cfg.ffmpeg, "-hide_banner", "-loglevel", "error") + seek + listOf("-i", source) + ffmpegOut))
+            listOf(ProcessBuilder(ffmpegBase + listOf("-i", source) + ffmpegOut))
         }
-        // stderr de cada proceso -> lo leemos nosotros para loguearlo
         builders.forEach { it.redirectError(ProcessBuilder.Redirect.PIPE) }
 
         // startPipeline conecta stdout(n) -> stdin(n+1) a nivel de SO, sin pasar por la JVM
@@ -54,7 +57,7 @@ class AudioPipeline(private val cfg: Config) {
         processes.forEachIndexed { i, p ->
             val name = builders[i].command().first()
             Thread.ofVirtual().start {
-                p.errorStream.bufferedReader().forEachLine { log.warning("[$name] $it") }
+                runCatching { p.errorStream.bufferedReader().forEachLine { log.warning("[$name] $it") } }
             }
         }
         log.info("Pipeline iniciado: ${builders.joinToString(" | ") { it.command().first() }}")
