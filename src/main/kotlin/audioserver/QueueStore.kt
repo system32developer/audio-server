@@ -13,7 +13,7 @@ class QueueStore(private val maxSize: Int = 50) {
         var current: String? = null
         var touched: Long = System.currentTimeMillis()
 
-        fun touch() { touched = System.currentTimeMillis() }
+        fun touch() { touched = System.currentTimeMillis(); ChangeSignal.bump() }
 
         fun startPlaying(item: String) {
             current?.let { history.addLast(it) }
@@ -21,6 +21,7 @@ class QueueStore(private val maxSize: Int = 50) {
             current = item
             touch()
         }
+
     }
 
     /** Foto inmutable de una cola, para el panel. */
@@ -155,5 +156,29 @@ class QueueStore(private val maxSize: Int = 50) {
     private companion object {
         const val HISTORY_MAX = 20
         const val IDLE_MS = 2 * 60 * 60 * 1000L
+    }
+}
+
+
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.locks.ReentrantLock
+import kotlin.concurrent.withLock
+
+/** Aviso de cambios: el panel espera aquí en vez de consultar cada 3 s. */
+object ChangeSignal {
+    private val lock = ReentrantLock()
+    private val cond = lock.newCondition()
+    @Volatile var version = 0L
+        private set
+
+    fun bump() = lock.withLock { version++; cond.signalAll() }
+
+    /** Espera a que la versión sea distinta de [seen]; devuelve la versión actual. */
+    fun await(seen: Long, timeoutMs: Long): Long {
+        var nanos = TimeUnit.MILLISECONDS.toNanos(timeoutMs)
+        lock.withLock {
+            while (version == seen && nanos > 0) nanos = cond.awaitNanos(nanos)
+            return version
+        }
     }
 }

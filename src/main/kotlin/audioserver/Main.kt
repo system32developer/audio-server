@@ -96,7 +96,7 @@ private fun handleStream(ex: HttpExchange, cfg: Config, cache: AudioCache, queue
     }
 
     if (search != null && ex.requestMethod == "GET") queues.nowPlaying(qid, search)
-    val entry = cache.obtain(source)
+    var entry = cache.obtain(source)
     val hit = entry.state == CacheEntry.State.DONE
     val startByte = startSec.toLong() * cfg.bytesPerSecond
     log.info("Stream $source t=$startSec ${if (hit) "CACHE HIT" else "descargando"} desde ${ex.remoteAddress}")
@@ -106,9 +106,13 @@ private fun handleStream(ex: HttpExchange, cfg: Config, cache: AudioCache, queue
         ex.sendResponseHeaders(200, -1)
         return
     }
-    // Espera al primer byte: si la descarga falla, se responde un error real en vez de un stream vacío
-    if (!entry.awaitBytes(startByte, 90_000)) return respondText(ex, 502, "audio unavailable")
-
+    if (!entry.awaitBytes(startByte, 90_000)) {
+        val alt = if (search != null && n == 1) Sources.fallback(search) else null
+        if (alt == null || alt == source) return respondText(ex, 502, "audio unavailable")
+        log.warning("Falló $source, probando búsqueda por texto")
+        entry = cache.obtain(alt)
+        if (!entry.awaitBytes(startByte, 90_000)) return respondText(ex, 502, "audio unavailable")
+    }
     ex.responseHeaders.add("Content-Type", "audio/mpeg")
     ex.responseHeaders.add("Cache-Control", "no-store")
     ex.sendResponseHeaders(200, 0) // chunked
@@ -240,6 +244,7 @@ private fun handleQueues(ex: HttpExchange, cfg: Config, queues: QueueStore, enri
 
     when (ex.requestURI.path.removeSuffix("/")) {
         "/queues" -> respondBytes(ex, 200, "text/html; charset=utf-8", Panel.html)
+        "/queues/events" -> streamEvents(ex)
         "/queues/api" -> {
             val json = queues.active().joinToString(",", "{\"queues\":[", "]}") { snap ->
                 buildString {
@@ -255,6 +260,23 @@ private fun handleQueues(ex: HttpExchange, cfg: Config, queues: QueueStore, enri
         }
         else -> respondText(ex, 404, "not found")
     }
+}
+
+private fun streamEvents(ex: HttpExchange) {
+    ex.responseHeaders.add("Content-Type", "text/event-stream; charset=utf-8")
+    ex.responseHeaders.add("Cache-Control", "no-store")
+    ex.responseHeaders.add("X-Accel-Buffering", "no") // que Traefik/nginx no lo bufereen
+    ex.sendResponseHeaders(200, 0)
+    val out = ex.responseBody
+    try {
+        var seen = -1L // fuerza un primer evento al conectar
+        while (true) {
+            val v = ChangeSignal.await(seen, 15_000)
+            if (v != seen) { out.write("data: $v\n\n".toByteArray()); seen = v }
+            else out.write(": ping\n\n".toByteArray()) // latido para mantener la conexión
+            out.flush()
+        }
+    } catch (_: IOException) { /* el navegador cerró la conexión */ }
 }
 
 /** Datos de una canción para el panel; si aún no tiene miniatura, se resuelve en segundo plano. */

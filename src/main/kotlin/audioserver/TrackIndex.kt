@@ -69,6 +69,7 @@ class Enricher(private val catalog: Catalog) {
                 val hit = runCatching { catalog.search(text, 1).firstOrNull() }.getOrNull()
                 if (hit != null) {
                     TrackIndex.remember(text, TrackIndex.Track(hit.id, hit.title, hit.channel, durationSeconds(hit.duration)))
+                    ChangeSignal.bump()
                 }
             } finally {
                 if (tried.size > 2000) tried.clear()

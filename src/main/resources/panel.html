@@ -1,62 +1,64 @@
 <!doctype html>
 <html lang="es">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Colas · audio-server</title>
-<style>
-:root{--bg:#f5f5f7;--card:#fff;--ink:#1c1c1e;--mute:#6e6e73;--line:#e3e3e8;--acc:#e5484d;--acc-ink:#fff;--hover:#f0f0f4}
-@media (prefers-color-scheme:dark){:root{--bg:#121214;--card:#1c1c20;--ink:#f2f2f4;--mute:#9a9aa3;--line:#2c2c32;--acc:#ff5a5f;--acc-ink:#fff;--hover:#26262c}}
-*{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
-button{font:inherit;color:inherit;cursor:pointer}
-.app{display:grid;grid-template-columns:240px 1fr;gap:16px;max-width:1100px;margin:0 auto;padding:16px 16px 130px}
-h1{font-size:18px;margin:0 0 12px}h2{font-size:15px;margin:0 0 10px}
-.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px}
-.stack{display:flex;flex-direction:column;gap:14px;min-width:0}
-.side .q{display:block;width:100%;text-align:left;background:none;border:1px solid transparent;border-radius:10px;padding:9px 10px;margin-bottom:4px}
-.side .q:hover{background:var(--hover)}
-.side .q.on{border-color:var(--acc);background:var(--hover)}
-.q b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.q span{color:var(--mute);font-size:12px;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.row{display:flex;gap:8px}
-input[type=text]{flex:1;min-width:0;padding:9px 11px;border:1px solid var(--line);border-radius:9px;background:var(--bg);color:var(--ink);font:inherit}
-input[type=text]:focus{outline:2px solid var(--acc);outline-offset:-1px}
-.btn{border:1px solid var(--line);background:var(--card);border-radius:9px;padding:8px 12px;white-space:nowrap}
-.btn:hover{background:var(--hover)}.btn.pri{background:var(--acc);border-color:var(--acc);color:var(--acc-ink)}
-.btn[disabled]{opacity:.45;cursor:default}
-.ic{width:34px;height:34px;padding:0;display:inline-grid;place-items:center;border-radius:50%;border:none;background:none}
-.ic:hover{background:var(--hover)}.ic svg{width:18px;height:18px;fill:currentColor}
-.ic[disabled]{opacity:.35;cursor:default}
-.track{display:flex;align-items:center;gap:10px;padding:7px 4px;border-radius:10px}
-.track:hover{background:var(--hover)}
-.track img,.ph{width:64px;height:36px;border-radius:6px;object-fit:cover;background:var(--line);flex:none}
-.track .t{flex:1;min-width:0}.t b{display:block;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.t span{color:var(--mute);font-size:12px}
-.n{width:22px;text-align:right;color:var(--mute);font-size:12px;flex:none}
-.dur{color:var(--mute);font-size:12px;flex:none;min-width:38px;text-align:right}
-.empty{color:var(--mute);padding:10px 4px}
-#sres,#pres{margin-top:8px}
-.head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;flex-wrap:wrap}
-.head h2{margin:0}
-#bar{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);padding:10px 16px;z-index:5}
-.bar{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr) 120px;gap:14px;align-items:center}
-.bar .track{padding:0}.bar .track:hover{background:none}
-.ctl{display:flex;align-items:center;justify-content:center;gap:4px}
-.ctl .play{width:42px;height:42px;background:var(--acc);color:var(--acc-ink)}.ctl .play:hover{background:var(--acc)}
-.seek{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--mute);margin-top:4px}
-.seek input{flex:1;accent-color:var(--acc)}
-input[type=range]{accent-color:var(--acc);width:100%}
-.tag{font-size:11px;color:var(--acc);font-weight:600}
-#toast{position:fixed;left:50%;bottom:120px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 14px;border-radius:20px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:9;max-width:90%}
-#toast.on{opacity:1}
-@media (max-width:760px){
- .app{grid-template-columns:1fr;padding-bottom:190px}
- .side{display:flex;gap:6px;overflow-x:auto}.side .q{width:auto;min-width:150px;flex:none}
- .bar{grid-template-columns:1fr;gap:6px}.bar .vol{display:none}
- #toast{bottom:200px}
-}
-</style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Colas · audio-server</title>
+  <style>
+    :root{--bg:#f5f5f7;--card:#fff;--ink:#1c1c1e;--mute:#6e6e73;--line:#e3e3e8;--acc:#e5484d;--acc-ink:#fff;--hover:#f0f0f4}
+    @media (prefers-color-scheme:dark){:root{--bg:#121214;--card:#1c1c20;--ink:#f2f2f4;--mute:#9a9aa3;--line:#2c2c32;--acc:#ff5a5f;--acc-ink:#fff;--hover:#26262c}}
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+    button{font:inherit;color:inherit;cursor:pointer}
+    .app{display:grid;grid-template-columns:240px 1fr;gap:16px;max-width:1100px;margin:0 auto;padding:16px 16px 130px}
+    h1{font-size:18px;margin:0 0 12px}h2{font-size:15px;margin:0 0 10px}
+    .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px}
+    .stack{display:flex;flex-direction:column;gap:14px;min-width:0}
+    .side .q{display:block;width:100%;text-align:left;background:none;border:1px solid transparent;border-radius:10px;padding:9px 10px;margin-bottom:4px}
+    .side .q:hover{background:var(--hover)}
+    .side .q.on{border-color:var(--acc);background:var(--hover)}
+    .q b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .q span{color:var(--mute);font-size:12px;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .row{display:flex;gap:8px}
+    input[type=text]{flex:1;min-width:0;padding:9px 11px;border:1px solid var(--line);border-radius:9px;background:var(--bg);color:var(--ink);font:inherit}
+    input[type=text]:focus{outline:2px solid var(--acc);outline-offset:-1px}
+    .btn{border:1px solid var(--line);background:var(--card);border-radius:9px;padding:8px 12px;white-space:nowrap}
+    .btn:hover{background:var(--hover)}.btn.pri{background:var(--acc);border-color:var(--acc);color:var(--acc-ink)}
+    .btn[disabled]{opacity:.45;cursor:default}
+    select.btn{color:var(--ink)}
+    .ic{width:34px;height:34px;padding:0;display:inline-grid;place-items:center;border-radius:50%;border:none;background:none}
+    .ic:hover{background:var(--hover)}.ic svg{width:18px;height:18px;fill:currentColor}
+    .ic[disabled]{opacity:.35;cursor:default}
+    .track{display:flex;align-items:center;gap:10px;padding:7px 4px;border-radius:10px}
+    .track:hover{background:var(--hover)}
+    .track img,.ph{width:64px;height:36px;border-radius:6px;object-fit:cover;background:var(--line);flex:none}
+    .track .t{flex:1;min-width:0}.t b{display:block;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .t span{color:var(--mute);font-size:12px}
+    .n{width:22px;text-align:right;color:var(--mute);font-size:12px;flex:none}
+    .dur{color:var(--mute);font-size:12px;flex:none;min-width:38px;text-align:right}
+    .empty{color:var(--mute);padding:10px 4px}
+    #sres,#pres{margin-top:8px}
+    .head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;flex-wrap:wrap}
+    .head h2{margin:0}
+    #bar{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);padding:10px 16px;z-index:5}
+    .bar{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr) 120px;gap:14px;align-items:center}
+    .bar .track{padding:0}.bar .track:hover{background:none}
+    .ctl{display:flex;align-items:center;justify-content:center;gap:4px}
+    .ctl .play{width:42px;height:42px;background:var(--acc);color:var(--acc-ink)}.ctl .play:hover{background:var(--acc)}
+    .ctl .play[disabled]{background:var(--line);color:var(--mute)}
+    .seek{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--mute);margin-top:4px}
+    .seek input{flex:1;accent-color:var(--acc)}
+    input[type=range]{accent-color:var(--acc);width:100%}
+    .tag{font-size:11px;color:var(--acc);font-weight:600}
+    #toast{position:fixed;left:50%;bottom:120px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 14px;border-radius:20px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:9;max-width:90%}
+    #toast.on{opacity:1}
+    @media (max-width:760px){
+      .app{grid-template-columns:1fr;padding-bottom:190px}
+      .side{display:flex;gap:6px;overflow-x:auto}.side .q{width:auto;min-width:150px;flex:none}
+      .bar{grid-template-columns:1fr;gap:6px}.bar .vol{display:none}
+      #toast{bottom:200px}
+    }
+  </style>
 </head>
 <body>
 <div class="app">
@@ -91,6 +93,10 @@ input[type=range]{accent-color:var(--acc);width:100%}
         <div class="head">
           <h2 id="qtitle">Cola</h2>
           <div class="row">
+            <select id="out" class="btn" title="Dónde suena la música">
+              <option value="alexa">Alexa</option>
+              <option value="web">Este navegador</option>
+            </select>
             <button class="btn" id="shuf">Mezclar</button>
             <button class="btn" id="clr">Vaciar</button>
           </div>
@@ -118,232 +124,264 @@ input[type=range]{accent-color:var(--acc);width:100%}
 <div id="toast"></div>
 
 <script>
-const P = new URLSearchParams(location.search);
-const TOKEN = P.get('token');
-let qid = P.get('qid') || '';
-let queues = [];
-let lastJson = '';
+  const P = new URLSearchParams(location.search);
+  const TOKEN = P.get('token');
+  let qid = P.get('qid') || '';
+  let queues = [];
+  let lastJson = '';
+  let OUT = localStorage.getItem('out') === 'web' ? 'web' : 'alexa'; // dónde suena: 'alexa' | 'web'
 
-const $ = s => document.querySelector(s);
-const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const thumb = id => id ? `https://i.ytimg.com/vi/${encodeURIComponent(id)}/mqdefault.jpg` : '';
-const fmt = s => {
-  s = Number(s); if (!isFinite(s) || s <= 0) return '';
-  s = Math.round(s); const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), r = s % 60;
-  return (h ? h + ':' + String(m).padStart(2, '0') : m) + ':' + String(r).padStart(2, '0');
-};
-const IC = {
-  play:'<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>',
-  pause:'<svg viewBox="0 0 24 24"><path d="M6 5h4v14H6zm8 0h4v14h-4z"/></svg>',
-  prev:'<svg viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/></svg>',
-  next:'<svg viewBox="0 0 24 24"><path d="M16 6h2v12h-2zM6 18l8.5-6L6 6z"/></svg>',
-  up:'<svg viewBox="0 0 24 24"><path d="m7 14 5-5 5 5z"/></svg>',
-  down:'<svg viewBox="0 0 24 24"><path d="m7 10 5 5 5-5z"/></svg>',
-  x:'<svg viewBox="0 0 24 24"><path d="M18.3 5.7 12 12l6.3 6.3-1.4 1.4L10.6 13.4 4.3 19.7 2.9 18.3 9.2 12 2.9 5.7 4.3 4.3l6.3 6.3 6.3-6.3z"/></svg>',
-  plus:'<svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6z"/></svg>',
-  top:'<svg viewBox="0 0 24 24"><path d="M5 4h14v2H5zm7 4 7 8h-5v4h-4v-4H5z"/></svg>',
-};
-$('#bprev').innerHTML = IC.prev; $('#bnext').innerHTML = IC.next; $('#bplay').innerHTML = IC.play;
+  const $ = s => document.querySelector(s);
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const thumb = id => id ? `https://i.ytimg.com/vi/${encodeURIComponent(id)}/mqdefault.jpg` : '';
+  const fmt = s => {
+    s = Number(s); if (!isFinite(s) || s <= 0) return '';
+    s = Math.round(s); const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), r = s % 60;
+    return (h ? h + ':' + String(m).padStart(2, '0') : m) + ':' + String(r).padStart(2, '0');
+  };
+  const IC = {
+    play:'<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>',
+    pause:'<svg viewBox="0 0 24 24"><path d="M6 5h4v14H6zm8 0h4v14h-4z"/></svg>',
+    prev:'<svg viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/></svg>',
+    next:'<svg viewBox="0 0 24 24"><path d="M16 6h2v12h-2zM6 18l8.5-6L6 6z"/></svg>',
+    up:'<svg viewBox="0 0 24 24"><path d="m7 14 5-5 5 5z"/></svg>',
+    down:'<svg viewBox="0 0 24 24"><path d="m7 10 5 5 5-5z"/></svg>',
+    x:'<svg viewBox="0 0 24 24"><path d="M18.3 5.7 12 12l6.3 6.3-1.4 1.4L10.6 13.4 4.3 19.7 2.9 18.3 9.2 12 2.9 5.7 4.3 4.3l6.3 6.3 6.3-6.3z"/></svg>',
+    plus:'<svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6z"/></svg>',
+    top:'<svg viewBox="0 0 24 24"><path d="M5 4h14v2H5zm7 4 7 8h-5v4h-4v-4H5z"/></svg>',
+  };
+  $('#bprev').innerHTML = IC.prev; $('#bnext').innerHTML = IC.next; $('#bplay').innerHTML = IC.play;
+  $('#out').value = OUT;
 
-let toastTimer;
-function toast(msg) {
-  const t = $('#toast'); t.textContent = msg; t.classList.add('on');
-  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('on'), 2600);
-}
-
-async function call(path, params = {}) {
-  const u = new URLSearchParams(params);
-  if (TOKEN) u.set('token', TOKEN);
-  return fetch(path + '?' + u);
-}
-const qcall = (action, params = {}) => call('/queue/' + action, { qid, ...params });
-const cur = () => queues.find(q => q.qid === qid) || { qid, count: 0, items: [], current: null, canGoBack: false };
-
-/* ---------------------------------------------------------------- colas */
-async function refresh() {
-  try {
-    const r = await call('/queues/api');
-    if (r.status === 403) { toast('Token inválido: abre el panel con ?token=…'); return; }
-    const raw = await r.text();
-    if (raw === lastJson) return;
-    lastJson = raw; queues = JSON.parse(raw).queues; render();
-  } catch (e) { /* servidor no disponible: se reintenta */ }
-}
-
-function selectQueue(id) {
-  qid = id;
-  const u = new URL(location.href); u.searchParams.set('qid', id); history.replaceState(null, '', u);
-  render();
-}
-
-function trackRow(t, extra, btns) {
-  const img = t.id ? `<img src="${thumb(t.id)}" loading="lazy" alt="">` : '<div class="ph"></div>';
-  return `<div class="track">${extra || ''}${img}<div class="t"><b title="${esc(t.title)}">${esc(t.title)}</b><span>${esc(t.channel || '')}</span></div><div class="dur">${fmt(t.duration)}</div>${btns || ''}</div>`;
-}
-
-function render() {
-  const known = queues.some(q => q.qid === qid);
-  $('#queues').innerHTML = queues.length ? queues.map(q =>
-    `<button class="q ${q.qid === qid ? 'on' : ''}" data-q="${esc(q.qid)}"><b>${esc(q.qid)}</b><span>${q.count} en cola${q.current ? ' · ' + esc(q.current.title) : ''}</span></button>`
-  ).join('') : '<div class="empty">Aún no hay colas. Cuando una cola tenga una canción aparece aquí.</div>';
-
-  $('#empty').hidden = !!qid; $('#work').hidden = !qid; $('#bar').hidden = !qid;
-  if (!qid) return;
-  const q = cur();
-  $('#qtitle').textContent = `Cola “${qid}” · ${q.count} ${q.count === 1 ? 'canción' : 'canciones'}` + (known ? '' : ' (nueva)');
-  $('#shuf').disabled = $('#clr').disabled = q.count === 0;
-
-  $('#list').innerHTML = q.items.length ? q.items.map((t, i) => trackRow(t, `<div class="n">${i + 1}</div>`,
-    `<button class="ic" data-a="play" data-i="${i + 1}" title="Reproducir ahora">${IC.play}</button>` +
-    `<button class="ic" data-a="top" data-i="${i + 1}" title="Poner siguiente" ${i === 0 ? 'disabled' : ''}>${IC.top}</button>` +
-    `<button class="ic" data-a="up" data-i="${i + 1}" title="Subir" ${i === 0 ? 'disabled' : ''}>${IC.up}</button>` +
-    `<button class="ic" data-a="down" data-i="${i + 1}" title="Bajar" ${i === q.items.length - 1 ? 'disabled' : ''}>${IC.down}</button>` +
-    `<button class="ic" data-a="rm" data-i="${i + 1}" title="Quitar">${IC.x}</button>`)).join('')
-    : '<div class="empty">La cola está vacía. Busca una canción o agrega una playlist.</div>';
-
-  renderBar();
-}
-
-$('#queues').onclick = e => { const b = e.target.closest('[data-q]'); if (b) selectQueue(b.dataset.q); };
-$('#newbtn').onclick = () => {
-  const v = $('#newq').value.trim();
-  if (!/^[A-Za-z0-9_-]{1,64}$/.test(v)) return toast('Usa solo letras, números, - y _');
-  $('#newq').value = ''; selectQueue(v);
-};
-$('#newq').onkeydown = e => { if (e.key === 'Enter') $('#newbtn').click(); };
-
-$('#list').onclick = async e => {
-  const b = e.target.closest('[data-a]'); if (!b) return;
-  const i = +b.dataset.i, t = cur().items[i - 1]; if (!t) return;
-  const a = b.dataset.a;
-  if (a === 'play') { const r = await qcall('playnow', { i, q: t.text }); if (r.ok) playText(await r.text()); }
-  else if (a === 'rm') await qcall('remove', { i, q: t.text });
-  else if (a === 'up') await qcall('move', { from: i, to: i - 1, q: t.text });
-  else if (a === 'down') await qcall('move', { from: i, to: i + 1, q: t.text });
-  else if (a === 'top') await qcall('move', { from: i, to: 1, q: t.text });
-  lastJson = ''; refresh();
-};
-$('#shuf').onclick = async () => { await qcall('shuffle'); lastJson = ''; refresh(); toast('Cola mezclada'); };
-$('#clr').onclick = async () => { if (confirm('¿Vaciar toda la cola?')) { await qcall('clear'); lastJson = ''; refresh(); } };
-
-/* ---------------------------------------------------------------- búsqueda y playlist */
-function parseTsv(txt) {
-  return txt.split('\n').filter(Boolean).map(l => l.split('\t')).filter(c => c.length >= 4)
-    .map(c => ({ id: c[0], title: c[1], channel: c[2], duration: parseFloat(c[3]) || null }));
-}
-const addParams = t => ({ q: t.title, id: t.id, channel: t.channel || '', dur: t.duration || '' });
-
-function showResults(box, list, withAll) {
-  box._list = list;
-  box.innerHTML = (withAll && list.length ? `<div class="head" style="margin-top:10px"><span class="empty">${list.length} canciones</span><button class="btn pri" data-all>Agregar todas</button></div>` : '') +
-    (list.length ? list.map((t, i) => trackRow(t, '',
-      `<button class="ic" data-add="${i}" data-next title="Agregar como siguiente">${IC.top}</button><button class="ic" data-add="${i}" title="Agregar al final">${IC.plus}</button>`)).join('')
-      : '<div class="empty">Sin resultados.</div>');
-}
-
-async function handleResultClick(e) {
-  const box = e.currentTarget;
-  if (e.target.closest('[data-all]')) {
-    const btn = e.target.closest('[data-all]'); btn.disabled = true;
-    let ok = 0;
-    for (const t of box._list) {
-      const r = await qcall('add', addParams(t));
-      if (r.status === 409) { toast(`Cola llena: se agregaron ${ok}`); break; }
-      if (r.ok) ok++;
-    }
-    if (ok) toast(`Se agregaron ${ok} canciones`);
-    btn.disabled = false; lastJson = ''; refresh(); return;
+  let toastTimer;
+  function toast(msg) {
+    const t = $('#toast'); t.textContent = msg; t.classList.add('on');
+    clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('on'), 2600);
   }
-  const b = e.target.closest('[data-add]'); if (!b) return;
-  const t = box._list[+b.dataset.add];
-  const r = b.hasAttribute('data-next') ? await qcall('insert', { ...addParams(t), i: 1 }) : await qcall('add', addParams(t));
-  if (r.status === 409) return toast('La cola está llena');
-  if (!r.ok) return toast('No se pudo agregar');
-  toast('Agregada: ' + t.title); lastJson = ''; refresh();
-}
-$('#sres').onclick = handleResultClick; $('#pres').onclick = handleResultClick;
 
-async function runSearch() {
-  const v = $('#sq').value.trim(); if (!v) return;
-  $('#sbtn').disabled = true; $('#sres').innerHTML = '<div class="empty">Buscando…</div>';
-  try { const r = await call('/search', { q: v, limit: 10 }); showResults($('#sres'), r.ok ? parseTsv(await r.text()) : [], false); }
-  catch { $('#sres').innerHTML = '<div class="empty">Error de conexión.</div>'; }
-  $('#sbtn').disabled = false;
-}
-$('#sbtn').onclick = runSearch; $('#sq').onkeydown = e => { if (e.key === 'Enter') runSearch(); };
+  async function call(path, params = {}) {
+    const u = new URLSearchParams(params);
+    if (TOKEN) u.set('token', TOKEN);
+    return fetch(path + '?' + u);
+  }
+  const qcall = (action, params = {}) => call('/queue/' + action, { qid, ...params });
+  const cur = () => queues.find(q => q.qid === qid) || { qid, count: 0, items: [], current: null, canGoBack: false };
 
-async function runPlaylist() {
-  const v = $('#pq').value.trim(); if (!v) return;
-  $('#pbtn').disabled = true; $('#pres').innerHTML = '<div class="empty">Cargando playlist… puede tardar unos segundos</div>';
-  try {
-    const r = await call('/playlist', { url: v, limit: 50 });
-    if (r.status === 400) $('#pres').innerHTML = '<div class="empty">Pega una URL válida de YouTube.</div>';
-    else showResults($('#pres'), r.ok ? parseTsv(await r.text()) : [], true);
-  } catch { $('#pres').innerHTML = '<div class="empty">Error de conexión.</div>'; }
-  $('#pbtn').disabled = false;
-}
-$('#pbtn').onclick = runPlaylist; $('#pq').onkeydown = e => { if (e.key === 'Enter') runPlaylist(); };
+  /* ---------------------------------------------------------------- colas */
+  async function refresh() {
+    try {
+      const r = await call('/queues/api');
+      if (r.status === 403) { toast('Token inválido: abre el panel con ?token=…'); return; }
+      const raw = await r.text();
+      if (raw === lastJson) return;
+      lastJson = raw; queues = JSON.parse(raw).queues; render();
+    } catch (e) { /* servidor no disponible: se reintenta */ }
+  }
 
-/* ---------------------------------------------------------------- controlador / reproductor */
-const audio = new Audio();
-let local = { text: null, offset: 0 };
+  function selectQueue(id) {
+    qid = id;
+    const u = new URL(location.href); u.searchParams.set('qid', id); history.replaceState(null, '', u);
+    render();
+  }
 
-function playText(text, t = 0) {
-  local = { text, offset: t };
-  const p = { q: text, t: Math.floor(t), qid }; if (TOKEN) p.token = TOKEN;
-  audio.src = '/stream?' + new URLSearchParams(p);
-  audio.play().catch(() => {});
-  lastJson = ''; refresh();
-}
-function stopLocal() { audio.pause(); audio.removeAttribute('src'); audio.load(); local = { text: null, offset: 0 }; renderBar(); }
+  function trackRow(t, extra, btns) {
+    const img = t.id ? `<img src="${thumb(t.id)}" loading="lazy" alt="">` : '<div class="ph"></div>';
+    return `<div class="track">${extra || ''}${img}<div class="t"><b title="${esc(t.title)}">${esc(t.title)}</b><span>${esc(t.channel || '')}</span></div><div class="dur">${fmt(t.duration)}</div>${btns || ''}</div>`;
+  }
 
-async function next() {
-  const r = await qcall('next');
-  if (r.status === 204) { stopLocal(); toast('La cola está vacía'); }
-  else if (r.ok) playText(await r.text());
-}
-async function prev() {
-  if (local.text && audio.currentTime > 3) return playText(local.text, 0);
-  const r = await qcall('prev');
-  if (r.status === 204) toast('No hay canción anterior'); else if (r.ok) playText(await r.text());
-}
-function toggle() {
-  if (local.text) return audio.paused ? audio.play() : audio.pause();
-  const c = cur().current;
-  if (c) playText(c.text); else next();
-}
-const duration = () => cur().current && cur().current.duration;
+  function render() {
+    const known = queues.some(q => q.qid === qid);
+    $('#queues').innerHTML = queues.length ? queues.map(q =>
+            `<button class="q ${q.qid === qid ? 'on' : ''}" data-q="${esc(q.qid)}"><b>${esc(q.qid)}</b><span>${q.count} en cola${q.current ? ' · ' + esc(q.current.title) : ''}</span></button>`
+    ).join('') : '<div class="empty">Aún no hay colas. Cuando una cola tenga una canción aparece aquí.</div>';
 
-function renderBar() {
-  if (!qid) return;
-  const c = cur().current;
-  $('#now').innerHTML = c
-    ? `${c.id ? `<img src="${thumb(c.id)}" alt="">` : '<div class="ph"></div>'}<div class="t"><b title="${esc(c.title)}">${esc(c.title)}</b><span>${esc(c.channel || '')}${local.text ? ' · <span class="tag">en este navegador</span>' : ' · sonando en la cola'}</span></div>`
-    : '<div class="ph"></div><div class="t"><b>Nada sonando</b><span>Pulsa ▶ para reproducir la cola aquí</span></div>';
-  $('#bplay').innerHTML = (local.text && !audio.paused) ? IC.pause : IC.play;
-  $('#bprev').disabled = !cur().canGoBack && !local.text;
-  $('#bnext').disabled = false;
-  const d = duration();
-  $('#tdur').textContent = fmt(d) || '–:––';
-  $('#seek').disabled = !(local.text && d);
-}
-function tick() {
-  const pos = local.offset + (audio.currentTime || 0), d = duration();
-  $('#tcur').textContent = fmt(pos) || '0:00';
-  if (d && !seeking) $('#seek').value = Math.min(1000, pos / d * 1000);
-}
-let seeking = false;
-$('#seek').oninput = () => { seeking = true; const d = duration(); if (d) $('#tcur').textContent = fmt($('#seek').value / 1000 * d) || '0:00'; };
-$('#seek').onchange = () => { seeking = false; const d = duration(); if (d && local.text) playText(local.text, $('#seek').value / 1000 * d); };
-$('#vol').oninput = () => { audio.volume = $('#vol').value / 100; };
-$('#bplay').onclick = toggle; $('#bnext').onclick = next; $('#bprev').onclick = prev;
-audio.addEventListener('play', renderBar); audio.addEventListener('pause', renderBar);
-audio.addEventListener('timeupdate', tick);
-audio.addEventListener('ended', next);
-audio.addEventListener('error', () => { if (local.text) { toast('No se pudo reproducir esta canción'); } });
+    $('#empty').hidden = !!qid; $('#work').hidden = !qid; $('#bar').hidden = !qid;
+    if (!qid) return;
+    const q = cur();
+    const alexa = OUT === 'alexa';
+    $('#qtitle').textContent = `Cola “${qid}” · ${q.count} ${q.count === 1 ? 'canción' : 'canciones'}` + (known ? '' : ' (nueva)');
+    $('#shuf').disabled = $('#clr').disabled = q.count === 0;
 
-/* ---------------------------------------------------------------- inicio */
-render(); refresh(); setInterval(refresh, 3000);
+    $('#list').innerHTML = q.items.length ? q.items.map((t, i) => trackRow(t, `<div class="n">${i + 1}</div>`,
+                    `<button class="ic" data-a="play" data-i="${i + 1}" title="${alexa ? 'Dejar como siguiente en Alexa' : 'Reproducir aquí'}" ${alexa && i === 0 ? 'disabled' : ''}>${IC.play}</button>` +
+                    `<button class="ic" data-a="top" data-i="${i + 1}" title="Poner siguiente" ${i === 0 ? 'disabled' : ''}>${IC.top}</button>` +
+                    `<button class="ic" data-a="up" data-i="${i + 1}" title="Subir" ${i === 0 ? 'disabled' : ''}>${IC.up}</button>` +
+                    `<button class="ic" data-a="down" data-i="${i + 1}" title="Bajar" ${i === q.items.length - 1 ? 'disabled' : ''}>${IC.down}</button>` +
+                    `<button class="ic" data-a="rm" data-i="${i + 1}" title="Quitar">${IC.x}</button>`)).join('')
+            : '<div class="empty">La cola está vacía. Busca una canción o agrega una playlist.</div>';
+
+    renderBar();
+  }
+
+  $('#queues').onclick = e => { const b = e.target.closest('[data-q]'); if (b) selectQueue(b.dataset.q); };
+  $('#newbtn').onclick = () => {
+    const v = $('#newq').value.trim();
+    if (!/^[A-Za-z0-9_-]{1,64}$/.test(v)) return toast('Usa solo letras, números, - y _');
+    $('#newq').value = ''; selectQueue(v);
+  };
+  $('#newq').onkeydown = e => { if (e.key === 'Enter') $('#newbtn').click(); };
+
+  $('#list').onclick = async e => {
+    const b = e.target.closest('[data-a]'); if (!b) return;
+    const i = +b.dataset.i, t = cur().items[i - 1]; if (!t) return;
+    const a = b.dataset.a;
+    if (a === 'play') {
+      if (OUT === 'alexa') {
+        // Alexa no recibe órdenes del panel: se deja como siguiente y se pide por voz
+        await qcall('move', { from: i, to: 1, q: t.text });
+        toast('Quedó como siguiente: di «Alexa, siguiente»');
+      } else {
+        const r = await qcall('playnow', { i, q: t.text }); if (r.ok) playText(await r.text());
+      }
+    }
+    else if (a === 'rm') await qcall('remove', { i, q: t.text });
+    else if (a === 'up') await qcall('move', { from: i, to: i - 1, q: t.text });
+    else if (a === 'down') await qcall('move', { from: i, to: i + 1, q: t.text });
+    else if (a === 'top') {
+      await qcall('move', { from: i, to: 1, q: t.text });
+      if (OUT === 'alexa') toast('Quedó como siguiente: di «Alexa, siguiente»');
+    }
+    lastJson = ''; refresh();
+  };
+  $('#shuf').onclick = async () => { await qcall('shuffle'); lastJson = ''; refresh(); toast('Cola mezclada'); };
+  $('#clr').onclick = async () => { if (confirm('¿Vaciar toda la cola?')) { await qcall('clear'); lastJson = ''; refresh(); } };
+
+  /* ---------------------------------------------------------------- búsqueda y playlist */
+  function parseTsv(txt) {
+    return txt.split('\n').filter(Boolean).map(l => l.split('\t')).filter(c => c.length >= 4)
+            .map(c => ({ id: c[0], title: c[1], channel: c[2], duration: parseFloat(c[3]) || null }));
+  }
+  const addParams = t => ({ q: t.title, id: t.id, channel: t.channel || '', dur: t.duration || '' });
+
+  function showResults(box, list, withAll) {
+    box._list = list;
+    box.innerHTML = (withAll && list.length ? `<div class="head" style="margin-top:10px"><span class="empty">${list.length} canciones</span><button class="btn pri" data-all>Agregar todas</button></div>` : '') +
+            (list.length ? list.map((t, i) => trackRow(t, '',
+                            `<button class="ic" data-add="${i}" data-next title="Agregar como siguiente">${IC.top}</button><button class="ic" data-add="${i}" title="Agregar al final">${IC.plus}</button>`)).join('')
+                    : '<div class="empty">Sin resultados.</div>');
+  }
+
+  async function handleResultClick(e) {
+    const box = e.currentTarget;
+    if (e.target.closest('[data-all]')) {
+      const btn = e.target.closest('[data-all]'); btn.disabled = true;
+      let ok = 0;
+      for (const t of box._list) {
+        const r = await qcall('add', addParams(t));
+        if (r.status === 409) { toast(`Cola llena: se agregaron ${ok}`); break; }
+        if (r.ok) ok++;
+      }
+      if (ok) toast(`Se agregaron ${ok} canciones`);
+      btn.disabled = false; lastJson = ''; refresh(); return;
+    }
+    const b = e.target.closest('[data-add]'); if (!b) return;
+    const t = box._list[+b.dataset.add];
+    const r = b.hasAttribute('data-next') ? await qcall('insert', { ...addParams(t), i: 1 }) : await qcall('add', addParams(t));
+    if (r.status === 409) return toast('La cola está llena');
+    if (!r.ok) return toast('No se pudo agregar');
+    toast('Agregada: ' + t.title); lastJson = ''; refresh();
+  }
+  $('#sres').onclick = handleResultClick; $('#pres').onclick = handleResultClick;
+
+  async function runSearch() {
+    const v = $('#sq').value.trim(); if (!v) return;
+    $('#sbtn').disabled = true; $('#sres').innerHTML = '<div class="empty">Buscando…</div>';
+    try { const r = await call('/search', { q: v, limit: 10 }); showResults($('#sres'), r.ok ? parseTsv(await r.text()) : [], false); }
+    catch { $('#sres').innerHTML = '<div class="empty">Error de conexión.</div>'; }
+    $('#sbtn').disabled = false;
+  }
+  $('#sbtn').onclick = runSearch; $('#sq').onkeydown = e => { if (e.key === 'Enter') runSearch(); };
+
+  async function runPlaylist() {
+    const v = $('#pq').value.trim(); if (!v) return;
+    $('#pbtn').disabled = true; $('#pres').innerHTML = '<div class="empty">Cargando playlist… puede tardar unos segundos</div>';
+    try {
+      const r = await call('/playlist', { url: v, limit: 50 });
+      if (r.status === 400) $('#pres').innerHTML = '<div class="empty">Pega una URL válida de YouTube.</div>';
+      else showResults($('#pres'), r.ok ? parseTsv(await r.text()) : [], true);
+    } catch { $('#pres').innerHTML = '<div class="empty">Error de conexión.</div>'; }
+    $('#pbtn').disabled = false;
+  }
+  $('#pbtn').onclick = runPlaylist; $('#pq').onkeydown = e => { if (e.key === 'Enter') runPlaylist(); };
+
+  /* ---------------------------------------------------------------- controlador / reproductor */
+  const audio = new Audio();
+  let local = { text: null, offset: 0 };
+
+  function playText(text, t = 0) {
+    local = { text, offset: t };
+    const p = { q: text, t: Math.floor(t), qid }; if (TOKEN) p.token = TOKEN;
+    audio.src = '/stream?' + new URLSearchParams(p);
+    audio.play().catch(() => {});
+    lastJson = ''; refresh();
+  }
+  function stopLocal() { audio.pause(); audio.removeAttribute('src'); audio.load(); local = { text: null, offset: 0 }; renderBar(); }
+
+  async function next() {
+    const r = await qcall('next');
+    if (r.status === 204) { stopLocal(); toast('La cola está vacía'); }
+    else if (r.ok) playText(await r.text());
+  }
+  async function prev() {
+    if (local.text && audio.currentTime > 3) return playText(local.text, 0);
+    const r = await qcall('prev');
+    if (r.status === 204) toast('No hay canción anterior'); else if (r.ok) playText(await r.text());
+  }
+  function toggle() {
+    if (local.text) return audio.paused ? audio.play() : audio.pause();
+    const c = cur().current;
+    if (c) playText(c.text); else next();
+  }
+  const duration = () => cur().current && cur().current.duration;
+
+  function renderBar() {
+    if (!qid) return;
+    const alexa = OUT === 'alexa';
+    const c = cur().current;
+    const where = alexa ? ' · sonando en Alexa'
+            : local.text ? ' · <span class="tag">en este navegador</span>' : ' · sonando en la cola';
+    $('#now').innerHTML = c
+            ? `${c.id ? `<img src="${thumb(c.id)}" alt="">` : '<div class="ph"></div>'}<div class="t"><b title="${esc(c.title)}">${esc(c.title)}</b><span>${esc(c.channel || '')}${where}</span></div>`
+            : `<div class="ph"></div><div class="t"><b>Nada sonando</b><span>${alexa ? 'Pide una canción a Alexa' : 'Pulsa ▶ para reproducir la cola aquí'}</span></div>`;
+    $('#bplay').innerHTML = (local.text && !audio.paused) ? IC.pause : IC.play;
+    // En modo Alexa el panel no controla la reproducción: solo muestra y ordena la cola
+    $('#bplay').disabled = alexa;
+    $('#bprev').disabled = alexa || (!cur().canGoBack && !local.text);
+    $('#bnext').disabled = alexa;
+    const d = duration();
+    $('#tdur').textContent = fmt(d) || '–:––';
+    $('#seek').disabled = alexa || !(local.text && d);
+  }
+  function tick() {
+    const pos = local.offset + (audio.currentTime || 0), d = duration();
+    $('#tcur').textContent = fmt(pos) || '0:00';
+    if (d && !seeking) $('#seek').value = Math.min(1000, pos / d * 1000);
+  }
+  let seeking = false;
+  $('#seek').oninput = () => { seeking = true; const d = duration(); if (d) $('#tcur').textContent = fmt($('#seek').value / 1000 * d) || '0:00'; };
+  $('#seek').onchange = () => { seeking = false; const d = duration(); if (d && local.text) playText(local.text, $('#seek').value / 1000 * d); };
+  $('#vol').oninput = () => { audio.volume = $('#vol').value / 100; };
+  $('#bplay').onclick = toggle; $('#bnext').onclick = next; $('#bprev').onclick = prev;
+  audio.addEventListener('play', renderBar); audio.addEventListener('pause', renderBar);
+  audio.addEventListener('timeupdate', tick);
+  audio.addEventListener('ended', next);
+  audio.addEventListener('error', () => { if (local.text) { toast('No se pudo reproducir esta canción'); } });
+
+  /* ---------------------------------------------------------------- inicio */
+  $('#out').onchange = () => {
+    OUT = $('#out').value; localStorage.setItem('out', OUT);
+    if (OUT === 'alexa') stopLocal();
+    render();
+  };
+
+  function connectEvents() {
+    const u = new URLSearchParams(); if (TOKEN) u.set('token', TOKEN);
+    const es = new EventSource('/queues/events?' + u); // se reconecta solo
+    es.onmessage = () => refresh();
+  }
+
+  render(); refresh(); connectEvents();
+  setInterval(refresh, 30000); // respaldo (p. ej. colas que caducan por inactividad)
 </script>
 </body>
 </html>
