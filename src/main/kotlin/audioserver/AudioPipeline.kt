@@ -68,6 +68,7 @@ class AudioPipeline(private val cfg: Config) {
     private fun ytDlpCommand(source: String, cookies: Path?): List<String> {
         val cmd = mutableListOf(cfg.ytDlp, "-f", "bestaudio/best", "-q", "-o", "-")
         cookies?.let { cmd += listOf("--cookies", it.toString()) }
+        cfg.ytDlpExtractorArgs?.let { cmd += listOf("--extractor-args", it) }   // <- línea nueva
         val n = Regex("^ytsearch(\\d+):").find(source)?.groupValues?.get(1)
         if (n != null) cmd += listOf("--playlist-items", n) else cmd += "--no-playlist"
         cmd += listOf("--", source)
