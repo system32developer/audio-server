@@ -17,8 +17,12 @@ import kotlin.concurrent.withLock
 
 /** Normalización de textos de búsqueda para que "Naruto " y "naruto" usen la misma caché. */
 object Sources {
-    fun search(query: String, n: Int): String =
-        "ytsearch$n:" + query.trim().lowercase().replace(Regex("\\s+"), " ")
+    fun search(query: String, n: Int): String {
+        // Si el usuario eligió este video en el panel, se reproduce exactamente ese
+        val pinned = if (n == 1) TrackIndex.pinnedId(query) else null
+        return if (pinned != null) "https://www.youtube.com/watch?v=$pinned"
+        else "ytsearch$n:" + query.trim().lowercase().replace(Regex("\\s+"), " ")
+    }
 }
 
 /** Un audio en la caché: puede estar descargándose (varios lectores lo siguen) o ya completo. */

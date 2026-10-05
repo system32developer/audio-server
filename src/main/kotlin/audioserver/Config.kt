@@ -13,6 +13,7 @@ data class Config(
     val cacheDir: String,
     val cacheMaxBytes: Long,
     val maxDownloads: Int,
+    val queueMax: Int,
 ) {
     /** MP3 CBR: bytes por segundo de audio (sirve para saltar a un punto del archivo). */
     val bytesPerSecond: Long
@@ -40,6 +41,7 @@ data class Config(
                 cacheDir = env["CACHE_DIR"] ?: "/cache",
                 cacheMaxBytes = (env["CACHE_MAX_MB"]?.toLongOrNull() ?: 2048L) * 1024L * 1024L,
                 maxDownloads = env["MAX_DOWNLOADS"]?.toIntOrNull() ?: 3,
+                queueMax = env["QUEUE_MAX"]?.toIntOrNull()?.coerceIn(1, 500) ?: 50,
             )
         }
     }
