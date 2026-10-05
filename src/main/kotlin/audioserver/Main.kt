@@ -5,6 +5,7 @@ import com.sun.net.httpserver.HttpServer
 import java.io.IOException
 import java.net.InetSocketAddress
 import java.net.URLDecoder
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
 import java.util.logging.Logger
 
@@ -13,6 +14,9 @@ private val QID = Regex("[A-Za-z0-9_-]{1,64}")
 private val VIDEO_ID = Regex("[A-Za-z0-9_-]{11}")
 private const val PREFETCH = 2 // cuántos elementos de la cola se descargan por adelantado
 private const val DEFAULT_QID = "alexa" // cola usada cuando /stream llega sin qid
+private class Redirect(val item: String, val at: Long)
+private val redirects = ConcurrentHashMap<String, Redirect>()
+private const val REDIRECT_TTL_MS = 10 * 60 * 1000L
 
 fun main() {
     val cfg = Config.fromEnv()
@@ -83,12 +87,24 @@ private fun handleStream(ex: HttpExchange, cfg: Config, cache: AudioCache, queue
     val q = parseQuery(ex.requestURI.rawQuery)
     if (!authorized(cfg, q)) return respondText(ex, 403, "forbidden")
 
-    val search = q["q"]?.trim()?.takeIf { it.isNotEmpty() && it.length <= 200 }
+    var search = q["q"]?.trim()?.takeIf { it.isNotEmpty() && it.length <= 200 }
     val id = q["id"]
     val qid = q["qid"]?.takeIf { QID.matches(it) } ?: DEFAULT_QID
-    val label = search ?: "id:$id"
-    val n = (q["n"]?.toIntOrNull() ?: 1).coerceIn(1, 10)
+    var n = (q["n"]?.toIntOrNull() ?: 1).coerceIn(1, 10)
     val startSec = (q["t"]?.toIntOrNull() ?: 0).coerceIn(0, 86_400)
+
+    // La skill pide "siguiente" como la misma búsqueda con n+1: si hay cola, manda la cola.
+    // El mapa recuerda la redirección para que una petición repetida (pausa/reanudar,
+    // reintento de Alexa) no saque otra canción de la cola.
+    if (search != null && n > 1) {
+        val key = "$qid|${TrackIndex.key(search)}|$n"
+        val now = System.currentTimeMillis()
+        redirects.entries.removeIf { now - it.value.at > REDIRECT_TTL_MS }
+        val item = redirects[key]?.item
+            ?: if (ex.requestMethod == "GET") queues.pop(qid)?.also { redirects[key] = Redirect(it, now) } else null
+        if (item != null) { search = item; n = 1 }
+    }
+
     val source = when {
         search != null -> Sources.search(search, n)
         id != null -> cfg.sources[id] ?: return respondText(ex, 404, "unknown id")
@@ -123,7 +139,6 @@ private fun handleStream(ex: HttpExchange, cfg: Config, cache: AudioCache, queue
         log.info("Stream $source cortado por el cliente") // normal: Alexa/navegador cerró la conexión
     }
 }
-
 // ------------------------------------------------------------------ /queue/*
 
 private fun handleQueue(ex: HttpExchange, cfg: Config, cache: AudioCache, queues: QueueStore) {

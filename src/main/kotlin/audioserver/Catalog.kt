@@ -14,14 +14,23 @@ class Catalog(private val cfg: Config) {
     }
 
     fun search(query: String, limit: Int): List<Entry> {
-        // Con limit = 1 (lo usa el Enricher) se mantiene el primer resultado de YouTube,
-        // para que coincida con lo que /stream realmente reproduce.
+        // Si pegan un enlace de YouTube, se resuelve ese video exacto
+        videoId(query)?.let { id ->
+            return list("https://www.youtube.com/watch?v=$id", 1, timeoutSeconds = 30, wholePlaylist = false)
+        }
+        // Con limit = 1 (lo usa el Enricher) se mantiene el primer resultado de YouTube
         if (limit == 1) return list("ytsearch1:$query", 1, timeoutSeconds = 30, wholePlaylist = false)
 
-        val pool = (limit * 3).coerceAtMost(30)
+        val pool = (limit * 2).coerceAtMost(20)
         return list("ytsearch$pool:$query", pool, timeoutSeconds = 40, wholePlaylist = false)
-            .sortedByDescending { score(it) } // el orden es estable: a igual puntaje, manda el de YouTube
+            .sortedByDescending { score(it) }
             .take(limit)
+    }
+
+    private fun videoId(text: String): String? {
+        val t = text.trim()
+        if ("youtube.com" !in t && "youtu.be" !in t) return null
+        return URL_ID.find(t)?.groupValues?.get(1)
     }
 
     /** Sube los canales oficiales y baja covers, remixes y similares. */
@@ -78,6 +87,7 @@ class Catalog(private val cfg: Config) {
     private companion object {
         const val SEP = "\u001f"
         val UNAVAILABLE = setOf("[Private video]", "[Deleted video]")
-        val BAD = Regex("cover|remix|karaoke|sped up|slowed|nightcore|8d|reverb|lyrics?|letra|instrumental")
+        val URL_ID = Regex("""(?:[?&]v=|youtu\.be/|/shorts/|/live/)([A-Za-z0-9_-]{11})""")
+        val BAD = Regex("""\b(cover|remix|karaoke|sped up|slowed|nightcore|8d|reverb)\b""")
     }
 }
