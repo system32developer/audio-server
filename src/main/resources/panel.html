@@ -290,7 +290,7 @@ let local = { text: null, offset: 0 };
 
 function playText(text, t = 0) {
   local = { text, offset: t };
-  const p = { q: text, t: Math.floor(t) }; if (TOKEN) p.token = TOKEN;
+  const p = { q: text, t: Math.floor(t), qid }; if (TOKEN) p.token = TOKEN;
   audio.src = '/stream?' + new URLSearchParams(p);
   audio.play().catch(() => {});
   lastJson = ''; refresh();

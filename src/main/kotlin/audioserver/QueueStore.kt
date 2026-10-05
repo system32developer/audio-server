@@ -98,6 +98,17 @@ class QueueStore(private val maxSize: Int = 50) {
         }
     }
 
+    fun nowPlaying(qid: String, item: String) {
+        val s = state(qid)
+        synchronized(s) {
+            val key = TrackIndex.key(item)
+            if (s.current?.let { TrackIndex.key(it) } == key) { s.touch(); return }
+            val queued = s.items.indexOfFirst { TrackIndex.key(it) == key }
+            if (queued >= 0) s.items.removeAt(queued)
+            s.startPlaying(item)
+        }
+    }
+
     fun remove(qid: String, index: Int, expected: String?): Boolean {
         val s = queues[qid] ?: return false
         synchronized(s) {

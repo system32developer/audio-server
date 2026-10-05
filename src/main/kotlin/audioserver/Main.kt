@@ -12,6 +12,7 @@ private val log = Logger.getLogger("Main")
 private val QID = Regex("[A-Za-z0-9_-]{1,64}")
 private val VIDEO_ID = Regex("[A-Za-z0-9_-]{11}")
 private const val PREFETCH = 2 // cuántos elementos de la cola se descargan por adelantado
+private const val DEFAULT_QID = "alexa" // cola usada cuando /stream llega sin qid
 
 fun main() {
     val cfg = Config.fromEnv()
@@ -27,7 +28,7 @@ fun main() {
 
     server.createContext("/stream") { ex ->
         try {
-            handleStream(ex, cfg, cache)
+            handleStream(ex, cfg, cache, queues)
         } catch (e: Exception) {
             log.warning("Error en /stream: ${e.message}")
             runCatching { respondText(ex, 500, "internal error") }
@@ -77,13 +78,15 @@ fun main() {
 
 // ------------------------------------------------------------------ /stream
 
-private fun handleStream(ex: HttpExchange, cfg: Config, cache: AudioCache) {
+private fun handleStream(ex: HttpExchange, cfg: Config, cache: AudioCache, queues: QueueStore) {
     if (ex.requestMethod != "GET" && ex.requestMethod != "HEAD") return respondText(ex, 405, "method not allowed")
     val q = parseQuery(ex.requestURI.rawQuery)
     if (!authorized(cfg, q)) return respondText(ex, 403, "forbidden")
 
     val search = q["q"]?.trim()?.takeIf { it.isNotEmpty() && it.length <= 200 }
     val id = q["id"]
+    val qid = q["qid"]?.takeIf { QID.matches(it) } ?: DEFAULT_QID
+    val label = search ?: "id:$id"
     val n = (q["n"]?.toIntOrNull() ?: 1).coerceIn(1, 10)
     val startSec = (q["t"]?.toIntOrNull() ?: 0).coerceIn(0, 86_400)
     val source = when {
@@ -92,6 +95,7 @@ private fun handleStream(ex: HttpExchange, cfg: Config, cache: AudioCache) {
         else -> return respondText(ex, 400, "missing id or q")
     }
 
+    if (search != null && ex.requestMethod == "GET") queues.nowPlaying(qid, search)
     val entry = cache.obtain(source)
     val hit = entry.state == CacheEntry.State.DONE
     val startByte = startSec.toLong() * cfg.bytesPerSecond
