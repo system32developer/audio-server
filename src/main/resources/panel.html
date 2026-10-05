@@ -286,7 +286,7 @@
   async function runSearch() {
     const v = $('#sq').value.trim(); if (!v) return;
     $('#sbtn').disabled = true; $('#sres').innerHTML = '<div class="empty">Buscando…</div>';
-    try { const r = await call('/search', { q: v, limit: 10 }); showResults($('#sres'), r.ok ? parseTsv(await r.text()) : [], false); }
+    try { const r = await call('/search', { q: v, limit: 15 }); showResults($('#sres'), r.ok ? parseTsv(await r.text()) : [], false); }
     catch { $('#sres').innerHTML = '<div class="empty">Error de conexión.</div>'; }
     $('#sbtn').disabled = false;
   }

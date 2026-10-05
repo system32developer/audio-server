@@ -13,8 +13,27 @@ class Catalog(private val cfg: Config) {
         fun toLine() = listOf(id, title, channel, duration).joinToString("\t") { it.replace('\t', ' ').replace('\n', ' ') }
     }
 
-    fun search(query: String, limit: Int): List<Entry> =
-        list("ytsearch$limit:$query", limit, timeoutSeconds = 30, wholePlaylist = false)
+    fun search(query: String, limit: Int): List<Entry> {
+        // Con limit = 1 (lo usa el Enricher) se mantiene el primer resultado de YouTube,
+        // para que coincida con lo que /stream realmente reproduce.
+        if (limit == 1) return list("ytsearch1:$query", 1, timeoutSeconds = 30, wholePlaylist = false)
+
+        val pool = (limit * 3).coerceAtMost(30)
+        return list("ytsearch$pool:$query", pool, timeoutSeconds = 40, wholePlaylist = false)
+            .sortedByDescending { score(it) } // el orden es estable: a igual puntaje, manda el de YouTube
+            .take(limit)
+    }
+
+    /** Sube los canales oficiales y baja covers, remixes y similares. */
+    private fun score(e: Entry): Int {
+        val ch = e.channel.lowercase()
+        val title = e.title.lowercase()
+        var s = 0
+        if (ch.endsWith("- topic")) s += 3                                   // audio oficial autogenerado
+        if ("vevo" in ch || "official" in ch || "oficial" in ch) s += 2
+        if (BAD.containsMatchIn(title)) s -= 2
+        return s
+    }
 
     fun playlist(url: String, limit: Int): List<Entry> =
         list(url, limit, timeoutSeconds = 120, wholePlaylist = true)
@@ -59,5 +78,6 @@ class Catalog(private val cfg: Config) {
     private companion object {
         const val SEP = "\u001f"
         val UNAVAILABLE = setOf("[Private video]", "[Deleted video]")
+        val BAD = Regex("cover|remix|karaoke|sped up|slowed|nightcore|8d|reverb|lyrics?|letra|instrumental")
     }
 }
