@@ -1,7 +1,9 @@
 package audioserver
 
 import java.util.concurrent.ConcurrentHashMap
-
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.locks.ReentrantLock
+import kotlin.concurrent.withLock
 /**
  * Colas en memoria, una por usuario (qid). Cada elemento es un texto de búsqueda.
  * Una cola "existe" (aparece en /queues) en cuanto tiene al menos una canción o algo sonando.
@@ -159,10 +161,6 @@ class QueueStore(private val maxSize: Int = 50) {
     }
 }
 
-
-import java.util.concurrent.TimeUnit
-import java.util.concurrent.locks.ReentrantLock
-import kotlin.concurrent.withLock
 
 /** Aviso de cambios: el panel espera aquí en vez de consultar cada 3 s. */
 object ChangeSignal {
